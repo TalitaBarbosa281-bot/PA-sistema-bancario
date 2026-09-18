@@ -4,15 +4,27 @@ clientes = []
 contas = []
 
 def fazerCadastro(clientes):
-        nome = input("Digite seu nome: ")
         cpf = input("Digite seu CPF: ")
+        for cliente in clientes:
+                if cliente[0] == cpf:
+                        print("Ops, já exite um cadastro com esse nome.")
+                        return
+        nome = input("Digite seu nome: ")
         clientes.append([cpf, nome])
         print ("Cadastro realizado com sucesso!")
 
 def criarConta(clientes, contas):
-    nome = input("Digite o nome do titular: ")
     cpf = input("Digite seu CPF: ")
+    clienteExiste = False
+    for cliente in clientes:
+            if cliente[0] == cpf:
+                    clienteExiste = True
+                    break
+    if not clienteExiste:
+            print("Você ainda não possui cadastro!")
+            return
 
+    nome = input("Digite o nome do titular: ")
     numConta = str(len(contas) + 1)
     contas.append([numConta, cpf, 0.0])
     print(f"Conta de número {numConta} criada com sucesso!")
