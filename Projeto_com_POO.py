@@ -19,7 +19,16 @@ class Conta:
         self.__saldo += valor
         print("Depósito realizado com sucesso!")
 
-
+    def sacar(self,valor):
+        if valor <= 0:
+            print("O valor do saque deve ser positivo.")
+            return
+        if valor > self.__saldo:
+            print("Saldo insuficiente.")
+            return
+        self.__saldo -= valor 
+        print("Saque realizado com sucesso!")            
+        
 class Cliente:
     def __init__(self, nome, cpf, conta):
         self.__nome = nome
