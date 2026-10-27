@@ -67,6 +67,28 @@ class Banco:
          num_conta = self.__prox_num_conta
          self.__prox_num_conta += 1
 
+    def listar_contas(self):
+        if not self.__contas:
+            print("Nenhuma conta encontrada.")
+            return
+        print("Lista de Contas Cadastradas")
+        for cliente in self.__clientes:
+            print(f"Titular: {cliente.nome}/nCPF: {cliente.cpf}/nNúmero da conta: {cliente.num_conta}")
+    def procurar_conta(self, num_conta):
+        for conta in self.__contas:
+            if conta.num_conta == num_conta:
+                return conta
+        print(f"Conta não encontrada.")
+        return None
+    def consultar_saldo(self, num_conta):
+        conta = self.procurar_conta(num_conta)
+        if conta:
+            print(f"O saldo da conta {conta.num_conta} é: R$ {conta.saldo:.2f}")
+            return conta.saldo
+        return None
+        
+            
+
     # Cria a conta
          conta = Conta(num_conta)
 
@@ -79,10 +101,17 @@ class Banco:
          return cliente
 banco = Banco()
 
-
+#testes
 cliente1 = banco.cadastrar_cliente("Luiz", "12345678900")
 cliente2 = banco.cadastrar_cliente("Talita", "987654321")
 
 
 cliente1.conta.depositar(500)
 print(cliente1.saldo)
+
+banco.listar_contas()
+banco.consultar_saldo(1)
+conta_encontrada = banco.procurar_conta(2)
+if conta_encontrada:
+    conta_encontrada.depositar(50)
+    
