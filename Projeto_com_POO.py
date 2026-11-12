@@ -1,117 +1,133 @@
-class Conta:
-    def __init__(self, num_conta):
-        self.__num_conta = num_conta
-        self.__saldo = 0.0
 
-    @property
-    def num_conta(self):
-        return self.__num_conta
-
-    @property
-    def saldo(self):
-        return self.__saldo 
-
-    def depositar(self, valor):
-        if valor <= 0:
-            print("O valor do depósito deve ser positivo.")
-            return
-
-        self.__saldo += valor
-        print("Depósito realizado com sucesso!")
-
-    def sacar(self,valor):
-        if valor <= 0:
-            print("O valor do saque deve ser positivo.")
-            return
-        if valor > self.__saldo:
-            print("Saldo insuficiente.")
-            return
-        self.__saldo -= valor 
-        print("Saque realizado com sucesso!")            
-        
 class Cliente:
-    def __init__(self, nome, cpf, conta):
+    def __init__(self, nome, cpf, salario, telefone):
         self.__nome = nome
         self.__cpf = cpf
-        self.__conta = conta
+        self.__salario = salario 
+        self.__telefone = telefone
 
     @property
     def nome(self):
         return self.__nome
-
     @property
     def cpf(self):
         return self.__cpf
-
     @property
-    def conta(self):
-        return self.__conta
+    def salario(self):
+        return self.__salario
+    @property
+    def telefone(self):
+        return self.__telefone
+
+class Conta:
+    def __init__(self, num_conta, tipo, cliente, saldo=0.0):
+        self.__num_conta = num_conta
+        self.__saldo = 0.0
+        self.__tipo = tipo
+        self.__cliente = cliente
+        self.__transacoes = []
 
     @property
     def num_conta(self):
-        return self.__conta.num_conta
-
+        return self.__num_conta
     @property
     def saldo(self):
-        return self.__conta.saldo
-    
+        return self.__saldo 
+    @property
+    def tipo(self):
+        return self.__tipo
+    @property
+    def cliente(self):
+        return self.__cliente
+    @property
+    def transacoes(self):
+        return self.__transacoes
 
-class Banco:
-    def __init__(self):
-        self.__clientes = []
-        self.__contas = []
-        self.__prox_num_conta = 1
+    def depositar(self, valor):
+        if valor > 0:
+            self._saldo += valor
+            self.transacoes.append(f"Depósito efetuado no valor de R$ {valor:.2f}")
+            return True
+        return False
 
-    def cadastrar_cliente(self, nome, cpf):
-    # Gera o número da conta
-         num_conta = self.__prox_num_conta
-         self.__prox_num_conta += 1
+    def sacar(self,valor):
+        if 0 < valor <= self.saldo:
+            self.saldo -= valor
+            self.transacoes.append(f"Saque efetuado no valor de R$ {valor:.2f}")
+            return True
+        return False  
 
-    def listar_contas(self):
-        if not self.__contas:
-            print("Nenhuma conta encontrada.")
-            return
-        print("Lista de Contas Cadastradas")
-        for cliente in self.__clientes:
-            print(f"Titular: {cliente.nome}/nCPF: {cliente.cpf}/nNúmero da conta: {cliente.num_conta}")
-    def procurar_conta(self, num_conta):
-        for conta in self.__contas:
-            if conta.num_conta == num_conta:
-                return conta
-        print(f"Conta não encontrada.")
-        return None
-    def consultar_saldo(self, num_conta):
-        conta = self.procurar_conta(num_conta)
-        if conta:
-            print(f"O saldo da conta {conta.num_conta} é: R$ {conta.saldo:.2f}")
-            return conta.saldo
-        return None
-        
+    def transferir(self, valor, conta_desejada):
+        if self.sacar(valor):
+            conta_desejada.depositar(valor)
+            self.transacoes.append(f"Transferência realizada co  sucesso!")
+            conta_desejada.transacoes.append(f"Tranferência recebida no valor de R$ {valor:.2f}")
+            return True
+        return False
             
+class Agencia:
+    def __init__(self, nome, numero):
+        self.__nome = nome
+        self.__numero = numero
+        self.__contas = []
 
-    # Cria a conta
-         conta = Conta(num_conta)
+    @property
+    def nome(self):
+        return self.__nome
+    @property
+    def numero(self):
+        return self.__numero
+    @property
+    def contas(self):
+        return self.__contas
 
-    # Cria o cliente associado à conta
-         cliente = Cliente(nome, cpf, conta)
+    def adicionar_conta(self, conta):
+        self.__contas.append(conta)
 
-    # Armazena os objetos no banco
-         self.__clientes.append(cliente)
-         self.__contas.append(conta)
-         return cliente
-banco = Banco()
+    def buscar_conta(self, numero):
+        for conta in self.__contas:
+            if conta.numero == numero:
+                return conta
+        return None
+    def calcular_patrimonio(self):
+        return sum(conta.saldo for conta in self.__contas)
 
-#testes
-cliente1 = banco.cadastrar_cliente("Luiz", "12345678900")
-cliente2 = banco.cadastrar_cliente("Talita", "987654321")
+    #Testes
+agencia_nova = Agencia("Nova Agência", "001")
+    #Criando os clientes
+cliente1 = Cliente("Ana Beatriz", "123.456.789.00", 1600.0, "(79) 9888_1234")
+cliente2 = Cliente("Pedro", "987.654.321.12", 2000.0, "(79) 9666-3333")
+    #Criando as contas
+conta1 = Conta("1000-2", "Corrente", cliente1, saldo=100.0)
+conta2 = Conta("2000-4", "Poupança", cliente2, saldo= 1000.0)
+    #Adicionando as contas na agencia
+agencia_nova.adicionar_conta(conta1)
+agencia_nova.adicionar_conta(conta2)
+    #Testando as operações
+print(f"Bem à {agencia_nova.nome} (Agência nº {agencia_nova.numero})")
+print(f"Titular da conta 1: {conta1.cliente.nome}")
+print(f"Saldo inicial da conta 1: R$ {conta1.saldo:.2f}")
+
+conta1.depositar(300.0)
+print(f"Saldo atualizado: R$: {conta1.saldo:.2f}")
+
+conta1.sacar(100.0)
+print(f"Saldo atualizado: R$ {conta1.saldo:.2f}")
+    #Transferindo da conta 1 da conta 2
+conta1.transferir(100.0, conta2)
+print(f"Saldo da conta 1 atualizado: {conta1.saldo:.2f}")
+print(f"Saldo da conta 2 atualizado: {conta2.saldo:.2f}")
+
+    #Testando o patrimônio total
+patrimonio = agencia_nova.calcular_patrimonio()
+print(f"\nPatrimônio total da {agencia_nova.nome}: R$ {patrimonio:.2f}")
+
+    #Exibindo o histórico de transações da conta 1
+print("\nHistórico de transações da conta 1:")
+for transacao in conta1.transacoes:
+    print ("-", transacao)
 
 
-cliente1.conta.depositar(500)
-print(cliente1.saldo)
+   
 
-banco.listar_contas()
-banco.consultar_saldo(1)
-conta_encontrada = banco.procurar_conta(2)
-if conta_encontrada:
-    conta_encontrada.depositar(50)
-    
+
