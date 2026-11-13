@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 class Cliente:
     def __init__(self, nome, cpf, salario, telefone):
         self.__nome = nome
@@ -8,43 +10,30 @@ class Cliente:
     @property
     def nome(self):
         return self.__nome
-
+   
     @property
     def cpf(self):
         return self.__cpf
 
-    @property
-    def salario(self):
-        return self.__salario
-
-    @property
-    def telefone(self):
-        return self.__telefone
-
-
-class Conta:
-    def __init__(self, num_conta, tipo, cliente, saldo=0.0):
+#CLASSE ABSTRATA CONTA (Superclasse)
+class Conta(ABC):
+    def __init__(self, num_conta, cliente, saldo=0.0):
         self.__num_conta = num_conta
-        self.__tipo = tipo         
-        self.__cliente = cliente    # Objeto Cliente
-        self.__saldo = saldo
-        self.__transacoes = []      # Histórico de transações
+        self.__saldo = float(saldo)
+        self.__cliente = cliente  
+        self.__transacoes = []
 
     @property
     def num_conta(self):
         return self.__num_conta
 
-    @property
-    def tipo(self):
-        return self.__tipo
+    @property   
+    def saldo(self):
+        return self.__saldo
 
     @property
     def cliente(self):
         return self.__cliente
-
-    @property
-    def saldo(self):
-        return self.__saldo
 
     @property
     def transacoes(self):
@@ -53,43 +42,68 @@ class Conta:
     def depositar(self, valor):
         if valor > 0:
             self.__saldo += valor
-            self.__transacoes.append(f"Depósito: +R$ {valor:.2f}")
+            self.__transacoes.append(f"Depósito: + R$ {valor:.2f}")
             return True
-        return False
+        return False     
 
     def sacar(self, valor):
         if 0 < valor <= self.__saldo:
             self.__saldo -= valor
-            self.__transacoes.append(f"Saque: -R$ {valor:.2f}")
+            self.__transacoes.append(f"Saque: - R$ {valor:.2f}")
             return True
         return False
 
-    def transferir(self, valor, conta_destino):
+    def transferir(self, valor, conta_desejada):
         if self.sacar(valor):
-            conta_destino.depositar(valor)
-            self.__transacoes.append(f"Transferência enviada: -R$ {valor:.2f} para a conta {conta_destino.num_conta}")
-            conta_destino.transacoes.append(f"Transferência recebida: +R$ {valor:.2f} da conta {self.__num_conta}")
+            conta_desejada.depositar(valor)
+            self.__transacoes.append(f"Transferência enviada para Conta {conta_desejada.num_conta}")
+            conta_desejada.__transacoes.append(f"Transferência recebida da Conta {self.__num_conta}: + R$ {valor:.2f}")
             return True
         return False
 
+    #Método abstrato: obriga as classes filhas a implementarem
+    @abstractmethod
+    def tipo_conta(self):
+        pass
+
+class ContaCorrente(Conta):
+    def __init__(self, num_conta, cliente, saldo=0.0, taxa_manutencao=15.0):
+        super().__init__(num_conta, cliente, saldo)
+        self.__taxa_manutencao = float(taxa_manutencao)
+
+    def tipo_conta(self):
+        return "Corrente"
+
+    def descontar_taxa(self):
+        if self.saldo >= self.__taxa_manutencao:
+            super().sacar(self.__taxa_manutencao)
+            self.transacoes.append(f"Taxa de manutenção descontada: - R$ {self.__taxa_manutencao:.2f}")
+            return True
+        return False
+
+class ContaPoupanca(Conta):
+    def __init__(self, num_conta, cliente, saldo=0.0, taxa_rendimento=0.01):
+        super().__init__(num_conta, cliente, saldo)
+        self.__taxa_rendimento = float(taxa_rendimento)
+
+    def tipo_conta(self):
+        return "Poupança"
+
+    def aplicar_rendimento(self):
+        rendimento = self.saldo * self.__taxa_rendimento
+        self.depositar(rendimento)
+        self.transacoes.append(f"Rendimento aplicado: + R$ {rendimento:.2f}")
+        return True
 
 class Agencia:
     def __init__(self, nome, numero):
         self.__nome = nome
         self.__numero = numero
-        self.__contas = []  
+        self.__contas = [] 
 
     @property
     def nome(self):
         return self.__nome
-
-    @property
-    def numero(self):
-        return self.__numero
-
-    @property
-    def contas(self):
-        return self.__contas
 
     def adicionar_conta(self, conta):
         self.__contas.append(conta)
@@ -100,49 +114,51 @@ class Agencia:
                 return conta
         return None
 
-    def calcular_patrimonio(self):
+    def calcular_patrimonio_total(self):
         return sum(conta.saldo for conta in self.__contas)
 
-
-#testes
-
+#TESTES
 if __name__ == "__main__":
-    # 1. Criando a Agência de forma genérica
-    minha_agencia = Agencia("Agência Central", "001")
+    #Criando a Agência
+    agencia = Agencia("Agência Central", "001")
 
-    # 2. Criando Clientes
-    cliente1 = Cliente("Ana Silva", "123.456.789-00", 3500.0, "(79) 99999-1111")
-    cliente2 = Cliente("Carlos Souza", "987.654.321-11", 4200.0, "(79) 98888-2222")
+    #Criando Clientes
+    cli1 = Cliente("Ana Beatriz", "123.456.789-00", 1600.0, "(79) 98888-1234")
+    cli2 = Cliente("Pedro", "987.654.321-12", 2000.0, "(79) 96666-3333")
 
-    # 3. Criando Contas associadas aos Clientes
-    conta1 = Conta("1001-5", "Corrente", cliente1, saldo=500.0)
-    conta2 = Conta("1002-3", "Poupança", cliente2, saldo=1200.0)
+    #Criando Contas (Corrente e Poupança herdando de Conta)
+    conta1 = ContaCorrente("1001-X", cli1, saldo=600.0)
+    conta2 = ContaPoupanca("2002-Y", cli2, saldo=1000.0)
 
-    # 4. Adicionando as contas à Agência[cite: 1]
-    minha_agencia.adicionar_conta(conta1)
-    minha_agencia.adicionar_conta(conta2)
+    #Adicionando na Agência
+    agencia.adicionar_conta(conta1)
+    agencia.adicionar_conta(conta2)
 
-    # 5. Testando operações
-    print(f"--- Bem-vindo à {minha_agencia.nome} (Agência nº {minha_agencia.numero}) ---")
-    print(f"Titular da conta 1: {conta1.cliente.nome}")
-    print(f"Saldo inicial da conta 1: R$ {conta1.saldo:.2f}")
+    print(f"--- Bem-vindo à {agencia.nome} ---")
+    print(f"Patrimônio Inicial da Agência: R$ {agencia.calcular_patrimonio_total():.2f}\n")
 
-    conta1.depositar(300.0)
-    print(f"Saldo após depósito: R$ {conta1.saldo:.2f}")
+    #Realizando Operações
+    print("Realizando depósito na Conta 1...")
+    conta1.depositar(200.0)
 
-    conta1.sacar(100.0)
-    print(f"Saldo após saque: R$ {conta1.saldo:.2f}")
+    print("Realizando transferência da Conta 2 para a Conta 1...")
+    conta2.transferir(300.0, conta1)
 
-    # Transferindo da conta 1 para a conta 2
-    conta1.transferir(100.0, conta2)
-    print(f"Saldo da conta 1 após transferência: R$ {conta1.saldo:.2f}")
-    print(f"Saldo da conta 2 após receber transferência: R$ {conta2.saldo:.2f}")
+    print("Aplicando rendimento na Conta Poupança 2...")
+    conta2.aplicar_rendimento()
 
-    # 6. Testando o patrimônio total da agência
-    patrimonio = minha_agencia.calcular_patrimonio()
-    print(f"\nPatrimônio total da {minha_agencia.nome}: R$ {patrimonio:.2f}")
+    print("Descontando taxa de manutenção na Conta Corrente 1...")
+    conta1.descontar_taxa()
 
-    # 7. Exibindo o histórico de transações da conta 1
-    print("\nHistórico de transações da Conta 1:")
-    for transacao in conta1.transacoes:
-        print("-", transacao)
+    #Resultados 
+    print("\n================ EXTRATOS FINAIS ================")
+    for conta in [conta1, conta2]:
+        print(f"\nConta: {conta.num_conta} ({conta.tipo_conta()})")
+        print(f"Titular: {conta.cliente.nome}")
+        print(f"Saldo Atual: R$ {conta.saldo:.2f}")
+        print("Histórico de Transações:")
+        for t in conta.transacoes:
+            print(f"  - {t}")
+
+    print(f"\nPatrimônio Final da Agência: R$ {agencia.calcular_patrimonio_total():.2f}")
+
